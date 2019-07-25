@@ -91,6 +91,18 @@
      (mul-scalar (make-vec 0.5 0.7 1) t)
      (mul-scalar (make-vec 1 1 1) (- 1 t)))))
 
+(defn make-ray [u v]
+  (let [lower_left_corner (make-vec -2 -1 -1)
+      horizontal (make-vec 4 0 0)
+      vertical (make-vec 0 2 0)
+      origin (make-vec 0 0 0)]
+    (ray
+     origin
+     (reduce add (list 
+                  lower_left_corner 
+                  (mul-scalar horizontal u) 
+                  (mul-scalar vertical v))))))
+
 (defn -gen-line 
   [w h y]
   (loop [x 0
@@ -98,7 +110,7 @@
     (if (= x w)
       (reverse coll)
       (do
-        (let [new-coll (conj coll (make-vec (/ x w) (/ y h) 0.2))]
+        (let [new-coll (conj coll (colour (make-ray (/ x w) (/ y h))))]
           (recur (inc x) new-coll))))))
 
 (defn -gen-frame 
@@ -113,7 +125,7 @@
 (defn get-ppm-header [w h] (str "P3\n" w " " h "\n255\n" ))
 (defn get-rgb [cols]
   (->> cols
-       -rgb-to-int
+    ;   -rgb-to-int ;; TODO this is not required til later in book
        vals
        (map map-to-255)
        (interpose " ")
@@ -126,11 +138,8 @@
 (defn write-image [file img]
   (spit file img))
 
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-(let [lower_left_corner (make-vec -2 -1 -1)
-      horizontal (make-vec 4 0 0)
-      vertical (make-vec 0 2 0)
-      origin (make-vec 0 0 0)]
-  ))
+  (write-image "test.ppm" (get-image 200 100)))
