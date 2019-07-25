@@ -11,11 +11,18 @@
        (map #(* k %))
        (apply make-vec)))
 
-(defn add
-  [a b]
-  (let [ac (vals a)
-        bc (vals b)]
-    (apply make-vec (map + ac bc))))
+
+(defn -add-sub
+  [op]
+  (fn
+    [a b]
+    (let [ac (vals a)
+          bc (vals b)]
+      (apply make-vec (map op ac bc)))))
+
+
+(def add (-add-sub +))
+(def sub (-add-sub -))
 
 (defn add-scalar [v k]
   (->> v
@@ -83,13 +90,24 @@
              (* aj bj)
              (* ak bk)))))
 
+(defn hit-sphere
+  [centre radius ray]
+  (let [oc (sub (:origin ray) centre)
+        a (dot (:direction ray) (:direction ray))
+        b (* (dot oc (:direction ray)) 2)
+        c (- (dot oc oc) (sqr radius))
+        discriminant (- (sqr b) (* 4 a c))]
+    (> discriminant 0)))
+
 (defn colour 
-  [ray] 
-  (let [dir (make-unit (:direction ray))
-        t (* (+ (:j dir) 1) 0.5)]
-    (add 
-     (mul-scalar (make-vec 0.5 0.7 1) t)
-     (mul-scalar (make-vec 1 1 1) (- 1 t)))))
+  [ray]
+  (if (hit-sphere (make-vec 0 0 -1) 0.5 ray)
+    (make-vec 1 0 0)
+    (let [dir (make-unit (:direction ray))
+          t (* (+ (:j dir) 1) 0.5)]
+      (add 
+       (mul-scalar (make-vec 0.5 0.7 1) t)
+       (mul-scalar (make-vec 1 1 1) (- 1 t))))))
 
 (defn make-ray [u v]
   (let [lower_left_corner (make-vec -2 -1 -1)
