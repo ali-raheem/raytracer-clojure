@@ -33,7 +33,9 @@
 
 (defn -rgb-to-int [C]
   (-> C
- ))
+      make-unit
+      (add-scalar 1)
+      (mul-scalar 0.5)))
 
 (defn map-to-255
   [x]
