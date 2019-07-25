@@ -1,36 +1,17 @@
 # raytracer
 
-FIXME: description
+[Peter Shirley's "Ray Tracing in a Weekend"](https://github.com/RayTracing/raytracinginoneweekend) implemented in [Clojure](https://clojure.org/). 
 
-## Installation
+## Current output
 
-Download from http://example.com/FIXME.
+![output.png](output.png)
 
-## Usage
+Currently completed up to about chapter 4.5
 
-FIXME: explanation
-
-    $ java -jar raytracer-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2019 Ali Raheem
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
