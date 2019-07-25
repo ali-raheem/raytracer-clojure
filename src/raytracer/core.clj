@@ -97,17 +97,21 @@
         b (* (dot oc (:direction ray)) 2)
         c (- (dot oc oc) (sqr radius))
         discriminant (- (sqr b) (* 4 a c))]
-    (> discriminant 0)))
+    (if (neg? discriminant)
+      -1
+      (/ (- (+ b (Math/sqrt discriminant))) (* 2 a)))))
 
 (defn colour 
   [ray]
-  (if (hit-sphere (make-vec 0 0 -1) 0.5 ray)
-    (make-vec 1 0 0)
-    (let [dir (make-unit (:direction ray))
-          t (* (+ (:j dir) 1) 0.5)]
-      (add 
-       (mul-scalar (make-vec 0.5 0.7 1) t)
-       (mul-scalar (make-vec 1 1 1) (- 1 t))))))
+  (let [t (hit-sphere (make-vec 0 0 -1) 0.5 ray)]
+    (if (pos? t)
+      (let [N (sub (point-at-t ray t) (make-vec 0 0 -1))]
+        (mul-scalar (apply make-vec (map inc (vals N))) 0.5))
+      (let [dir (make-unit (:direction ray))
+            t (* (+ (:j dir) 1) 0.5)]
+        (add 
+         (mul-scalar (make-vec 0.5 0.7 1) t)
+         (mul-scalar (make-vec 1 1 1) (- 1 t)))))))
 
 (defn make-ray [u v]
   (let [lower_left_corner (make-vec -2 -1 -1)
@@ -140,7 +144,10 @@
       (let [new-coll (concat coll (-gen-line w h y))]
         (recur (dec y) new-coll)))))
 
-(defn get-ppm-header [w h] (str "P3\n" w " " h "\n255\n" ))
+(defn get-ppm-header 
+  [w h] 
+  (str "P3\n" w " " h "\n255\n" ))
+
 (defn get-rgb [cols]
   (->> cols
     ;   -rgb-to-int ;; TODO this is not required til later in book
@@ -148,10 +155,16 @@
        (map map-to-255)
        (interpose " ")
        (apply str)))
-(defn get-colours [cols] (map str (get-rgb cols)))
 
-(defn get-image [w h]
-  (str (get-ppm-header w h) (clojure.string/join "\n" (map get-rgb (-gen-frame w h)))))
+(defn get-colours 
+  [cols] 
+  (map str (get-rgb cols)))
+
+(defn get-image 
+  [w h]
+  (str 
+   (get-ppm-header w h) 
+   (clojure.string/join "\n" (map get-rgb (-gen-frame w h)))))
 
 (defn write-image [file img]
   (spit file img))
