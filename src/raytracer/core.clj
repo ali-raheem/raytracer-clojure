@@ -11,10 +11,16 @@
        (map #(* k %))
        (apply make-vec)))
 
+(defn add
+  [a b]
+  (let [ac (vals a)
+        bc (vals b)]
+    (apply make-vec (map + ac bc))))
+
 (defn add-scalar [v k]
   (->> v
        vals
-       (map inc)
+       (map #(+ k %))
        (apply make-vec)))
 
 (defn sqr [x] (* x x))
@@ -27,6 +33,16 @@
 
 (defn magnitude [v]
   (Math/sqrt (sqr-length v)))
+
+(defn ray
+  ([a b] {:origin a, :direction b})
+  ([ai aj ak bi bj bk] (ray (make-vec ai aj ak) (make-vec bi bj bk))))
+
+(defn point-at-t
+  [ray t]
+  (let [a (:origin ray)
+        b (:direction ray)]
+    (add a (mul-scalar b t))))
 
 (defn make-unit [v]
   (mul-scalar v (/ 1 (magnitude v))))
@@ -67,6 +83,13 @@
              (* aj bj)
              (* ak bk)))))
 
+(defn colour 
+  [ray] 
+  (let [dir (make-unit (:direction ray))
+        t (* (+ (:j dir) 1) 0.5)]
+    (add 
+     (mul-scalar (make-vec 0.5 0.7 1) t)
+     (mul-scalar (make-vec 1 1 1) (- 1 t)))))
 
 (defn -gen-line 
   [w h y]
@@ -106,4 +129,8 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (write-image "test.ppm" (get-image 200 100)))
+(let [lower_left_corner (make-vec -2 -1 -1)
+      horizontal (make-vec 4 0 0)
+      vertical (make-vec 0 2 0)
+      origin (make-vec 0 0 0)]
+  ))
