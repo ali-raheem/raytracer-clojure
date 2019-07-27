@@ -1,21 +1,7 @@
 (ns raytracer.core
-  (:require [raytracer.vec3 :as vec3])
+  (:require [raytracer.vec3 :as vec3]
+            [raytracer.ray :as ray])
   (:gen-class))
-
-(defn ray
-  ([a b] 
-   {:origin a,
-    :direction b})
-  ([ai aj ak bi bj bk] 
-   (ray 
-    (vec3/make-vec ai aj ak) 
-    (vec3/make-vec bi bj bk))))
-
-(defn point-at-t
-  [ray t]
-  (let [a (:origin ray)
-        b (:direction ray)]
-    (vec3/add a (vec3/mul-scalar b t))))
 
 (defn -rgb-to-int [C]
   (-> C
@@ -42,7 +28,7 @@
   [ray]
   (let [t (hit-sphere (vec3/make-vec 0 0 -1) 0.5 ray)]
     (if (pos? t)
-      (let [N (vec3/sub (point-at-t ray t) (vec3/make-vec 0 0 -1))]
+      (let [N (vec3/sub (ray/point-at-t ray t) (vec3/make-vec 0 0 -1))]
 ; TODO thread as
         (vec3/mul-scalar 
          (apply vec3/make-vec 
@@ -54,17 +40,6 @@
          (vec3/mul-scalar (vec3/make-vec 0.5 0.7 1) t)
          (vec3/mul-scalar (vec3/make-vec 1 1 1) (- 1 t)))))))
 
-(defn make-ray [u v]
-  (let [lower_left_corner (vec3/make-vec -2 -1 -1)
-      horizontal (vec3/make-vec 4 0 0)
-      vertical (vec3/make-vec 0 2 0)
-      origin (vec3/make-vec 0 0 0)]
-    (ray
-     origin
-     (reduce vec3/add (list 
-                  lower_left_corner 
-                  (vec3/mul-scalar horizontal u) 
-                  (vec3/mul-scalar vertical v))))))
 
 (defn -gen-line 
   [w h y]
@@ -73,7 +48,7 @@
     (if (= x w)
       (reverse coll)
       (do
-        (let [new-coll (conj coll (colour (make-ray (/ x w) (/ y h))))]
+        (let [new-coll (conj coll (colour (ray/make-camera-ray (/ x w) (/ y h))))]
           (recur (inc x) new-coll))))))
 
 (defn -gen-frame 
