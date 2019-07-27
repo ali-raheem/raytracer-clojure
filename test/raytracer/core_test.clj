@@ -2,6 +2,6 @@
   (:require [clojure.test :refer :all]
             [raytracer.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest make-vec-test
+  (testing "make-vec"
+    (is (= (make-vec 1 2 3) {:i 1 :j 2 :k 3}))))
