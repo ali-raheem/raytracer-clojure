@@ -1,129 +1,70 @@
 (ns raytracer.core
+  (:require [raytracer.vec3 :as vec3])
   (:gen-class))
 
-(defn make-vec 
-  [i j k] 
-  (zipmap '(:i :j :k) [i j k]))
-
-(defn mul-scalar [v k]
-  (->> v
-       vals
-       (map #(* k %))
-       (apply make-vec)))
-
-
-(defn -add-sub
-  [op]
-  (fn
-    [a b]
-    (let [ac (vals a)
-          bc (vals b)]
-      (apply make-vec (map op ac bc)))))
-
-
-(def add (-add-sub +))
-(def sub (-add-sub -))
-
-(defn add-scalar [v k]
-  (->> v
-       vals
-       (map #(+ k %))
-       (apply make-vec)))
-
-(defn sqr [x] (* x x))
-
-(defn sqr-length [v]
-  (->> v
-       vals
-       (map #(sqr %))
-       (reduce +)))
-
-(defn magnitude [v]
-  (Math/sqrt (sqr-length v)))
-
 (defn ray
-  ([a b] {:origin a, :direction b})
-  ([ai aj ak bi bj bk] (ray (make-vec ai aj ak) (make-vec bi bj bk))))
+  ([a b] 
+   {:origin a,
+    :direction b})
+  ([ai aj ak bi bj bk] 
+   (ray 
+    (vec3/make-vec ai aj ak) 
+    (vec3/make-vec bi bj bk))))
 
 (defn point-at-t
   [ray t]
   (let [a (:origin ray)
         b (:direction ray)]
-    (add a (mul-scalar b t))))
-
-(defn make-unit [v]
-  (mul-scalar v (/ 1 (magnitude v))))
+    (vec3/add a (vec3/mul-scalar b t))))
 
 (defn -rgb-to-int [C]
   (-> C
-      make-unit
-      (add-scalar 1)
-      (mul-scalar 0.5)))
+      vec3/make-unit
+      (vec3/add-scalar 1)
+      (vec3/mul-scalar 0.5)))
 
 (defn map-to-255
   [x]
   (int (* 255.99 x)))
 
-(defn cross
-  [a b]
-  (let [ai (:i a)
-        bi (:i b)
-        aj (:j a)
-        bj (:j b)
-        ak (:k a)
-        bk (:k b)]
-    {:i (- (* aj bk) (* ak bj))
-     :j (- (* ak bi) (* ai bk))
-     :k (- (* ai bj) (* aj bi))}))
-
-(defn dot
-  [a b]
-  (let [ai (:i a)
-        bi (:i b)
-        aj (:j a)
-        bj (:j b)
-        ak (:k a)
-        bk (:k b)]
-    (reduce + 
-            (list 
-             (* ai bi)
-             (* aj bj)
-             (* ak bk)))))
-
 (defn hit-sphere
   [centre radius ray]
-  (let [oc (sub (:origin ray) centre)
-        a (dot (:direction ray) (:direction ray))
-        b (* (dot oc (:direction ray)) 2)
-        c (- (dot oc oc) (sqr radius))
-        discriminant (- (sqr b) (* 4 a c))]
+  (let [oc (vec3/sub (:origin ray) centre)
+        a (vec3/dot (:direction ray) (:direction ray))
+        b (* (vec3/dot oc (:direction ray)) 2)
+        c (- (vec3/dot oc oc) (* radius radius))
+        discriminant (- (* b b) (* 4 a c))]
     (if (neg? discriminant)
       -1
       (/ (- (+ b (Math/sqrt discriminant))) (* 2 a)))))
 
 (defn colour 
   [ray]
-  (let [t (hit-sphere (make-vec 0 0 -1) 0.5 ray)]
+  (let [t (hit-sphere (vec3/make-vec 0 0 -1) 0.5 ray)]
     (if (pos? t)
-      (let [N (sub (point-at-t ray t) (make-vec 0 0 -1))]
-        (mul-scalar (apply make-vec (map inc (vals N))) 0.5))
-      (let [dir (make-unit (:direction ray))
+      (let [N (vec3/sub (point-at-t ray t) (vec3/make-vec 0 0 -1))]
+; TODO thread as
+        (vec3/mul-scalar 
+         (apply vec3/make-vec 
+                (map inc 
+                     (vals N))) 0.5))
+      (let [dir (vec3/make-unit (:direction ray))
             t (* (+ (:j dir) 1) 0.5)]
-        (add 
-         (mul-scalar (make-vec 0.5 0.7 1) t)
-         (mul-scalar (make-vec 1 1 1) (- 1 t)))))))
+        (vec3/add 
+         (vec3/mul-scalar (vec3/make-vec 0.5 0.7 1) t)
+         (vec3/mul-scalar (vec3/make-vec 1 1 1) (- 1 t)))))))
 
 (defn make-ray [u v]
-  (let [lower_left_corner (make-vec -2 -1 -1)
-      horizontal (make-vec 4 0 0)
-      vertical (make-vec 0 2 0)
-      origin (make-vec 0 0 0)]
+  (let [lower_left_corner (vec3/make-vec -2 -1 -1)
+      horizontal (vec3/make-vec 4 0 0)
+      vertical (vec3/make-vec 0 2 0)
+      origin (vec3/make-vec 0 0 0)]
     (ray
      origin
-     (reduce add (list 
+     (reduce vec3/add (list 
                   lower_left_corner 
-                  (mul-scalar horizontal u) 
-                  (mul-scalar vertical v))))))
+                  (vec3/mul-scalar horizontal u) 
+                  (vec3/mul-scalar vertical v))))))
 
 (defn -gen-line 
   [w h y]

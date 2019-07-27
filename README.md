@@ -8,6 +8,9 @@
 
 Currently completed up to about chapter 4.5
 
+## Bugs
+
+* PPM generation has an error prevents imagemagick using it but not GIMP
 
 ## License
 
