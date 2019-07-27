@@ -70,7 +70,8 @@
   [w h]
   (str 
    (get-ppm-header w h) 
-   (clojure.string/join "\n" (map get-rgb (-gen-frame w h)))))
+   (clojure.string/join "\n" (map get-rgb (-gen-frame w h)))
+   "\n"))
 
 (defn write-image [file img]
   (spit file img))
