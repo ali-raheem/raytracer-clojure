@@ -4,6 +4,18 @@
             [raytracer.sphere :as sphere])
   (:gen-class))
 
+(defn hitable
+  [centre radius hit]
+  {:centre centre
+   :radius radius
+   :hit hit})
+
+(def myhitlist (list
+                (hitable (vec3/make-vec 0 -100.5 -1) 100 sphere/hit)
+                (hitable (vec3/make-vec 0 0 -1) 0.5 sphere/hit)
+                ))
+
+
 (defn -rgb-to-int [C]
   (-> C
       vec3/make-unit
@@ -15,10 +27,12 @@
   (int (* 255.99 x)))
 
 (defn colour 
-  [ray]
-  (let [t (sphere/hit (vec3/make-vec 0 0 -1) 0.5 ray)]
-    (if (pos? t)
-      (let [N (vec3/sub (ray/point-at-t ray t) (vec3/make-vec 0 0 -1))]
+  [ray hitelem tmin tmax]
+  (let [rec ((:hit hitelem) (:centre hitelem) (:radius hitelem) ray tmin tmax)]
+    (if (some? rec)
+      (let [t (:t rec)
+            N (:n rec)
+            p (:p rec)]
 ; TODO thread as
         (vec3/mul-scalar 
          (apply vec3/make-vec 
@@ -30,6 +44,17 @@
          (vec3/mul-scalar (vec3/make-vec 0.5 0.7 1) t)
          (vec3/mul-scalar (vec3/make-vec 1 1 1) (- 1 t)))))))
 
+(defn detect-hits 
+  [ray world tmin tmax]
+  (loop [world world
+         closest tmax
+         rec nil]
+    (if (empty? world)
+      rec
+      (let [obj (first world)
+            hitrec (colour ray obj tmin closest)]
+        (recur (rest world) closest (if (some? hitrec) hitrec rec))
+        ))))
 
 (defn -gen-line 
   [w h y]
@@ -38,7 +63,11 @@
     (if (= x w)
       (reverse coll)
       (do
-        (let [new-coll (conj coll (colour (ray/make-camera-ray (/ x w) (/ y h))))]
+        (let [new-coll (conj coll (detect-hits 
+                                   (ray/make-camera-ray (/ x w) (/ y h)) 
+                                   myhitlist 
+                                   0 
+                                   100))]
           (recur (inc x) new-coll))))))
 
 (defn -gen-frame 
@@ -56,7 +85,7 @@
 
 (defn get-rgb [cols]
   (->> cols
-    ;   -rgb-to-int ;; TODO this is not required til later in book
+   ;    -rgb-to-int
        vals
        (map map-to-255)
        (interpose " ")
