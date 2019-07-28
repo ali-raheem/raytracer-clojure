@@ -6,8 +6,9 @@
 
 ![output.png](output.png)
 
-This 800x400 image takes 40s on my ancient laptop and less than 20 on my PC.
-Currently completed up to about chapter 5
+This 200x100 image to 4 and a half minutes on my good PC.
+
+Currently completed up to about chapter 6
 
 ## License
 
