@@ -6,7 +6,7 @@
 
 ![output.png](output.png)
 
-This 200x100 image to 4 and a half minutes on my good PC.
+This 800x400 (with 100x super sampling) took 65 minutes on my PC (Ryzen 5 2500 - single thread).
 
 Currently completed up to about chapter 6
 

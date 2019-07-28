@@ -181,4 +181,4 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (write-image "output.ppm" (get-image 200 100 100)))
+  (write-image "output.ppm" (get-image 800 400 100)))
