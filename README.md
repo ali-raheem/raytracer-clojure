@@ -1,4 +1,4 @@
-# raytracer
+# RayTracer
 
 [Peter Shirley's "Ray Tracing in a Weekend"](https://github.com/RayTracing/raytracinginoneweekend) implemented in [Clojure](https://clojure.org/). 
 
@@ -6,8 +6,8 @@
 
 ![output.png](output.png)
 
-This 800x400 image takes 11.7s to generate on my computer.
-Currently completed up to about chapter 4.5
+This 800x400 image takes 40s on my ancient laptop and less than 20 on my PC.
+Currently completed up to about chapter 5
 
 ## License
 
