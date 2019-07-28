@@ -4,6 +4,8 @@
             [raytracer.sphere :as sphere])
   (:gen-class))
 
+(def bounce-depth 100)
+
 (defn hitable
   [centre radius hit]
   {:centre centre
@@ -30,6 +32,20 @@
    :post [(> 256 %), (<= 0 %)]}
   (int (* 255.99 x)))
 
+(defn -random-vec []
+  (vec3/make-vec (rand) (rand) (rand)))
+
+(defn -random-point-sphere-vec []
+  (vec3/sub (vec3/mul-scalar  (-random-vec) 2) (vec3/make-vec 1 1 1)))
+
+(defn random-point-sphere []
+  (loop [p (-random-point-sphere-vec)]
+    (if (>= 1 (vec3/sqr-length p))
+      p
+      (recur (-random-point-sphere-vec)))))
+
+(declare detect-hits)
+
 (defn colour 
   [ray hitelem tmin tmax]
   (let [hitfn (:hit hitelem)
@@ -38,17 +54,25 @@
         rec (hitfn centre radius ray tmin tmax)]
     (if (some? rec)
       (let [t (:t rec)
-            N (:n rec)
+            n (:n rec)
             p (:p rec)]
 ; TODO thread as
-        {:t t
-         :colour (vec3/mul-scalar 
-                  (apply vec3/make-vec 
-                         (map inc 
-                              (vals (vec3/make-unit N)))) 0.5)})
+        (let [target (vec3/add p (vec3/add n (random-point-sphere)))]
+          {:t t
+           :p p
+           :n n
+           :colour (vec3/mul-scalar 
+                    (detect-hits 
+                     (ray/ray p target) 
+                     myhitlist 0.0001 100000)
+                    0.5)}))
       (let [dir (vec3/make-unit (:direction ray))
-            t (* (+ (:j dir) 1) 0.5)]
+            t (* (+ (:j dir) 1) 0.5)
+            p (ray/point-at-t ray t)
+            n (vec3/make-vec 0 0 -1)]
         {:t tmax
+         :p p
+         :n n
          :colour (vec3/add 
                   (vec3/mul-scalar 
                    (vec3/make-vec 0.5 0.7 1) t)
@@ -89,29 +113,41 @@
     (conj coll hit)
     coll))
 
+(defn super-sample
+  [x y w h bounce-depth]
+  (loop [ns 0
+         col (vec3/make-vec 0 0 0)]
+    (if (= bounce-depth ns)
+      (vec3/mul-scalar col (/ 1 ns))
+      (let [nx (+ (rand) x)
+            ny (+ (rand) y)
+            new-col (vec3/add col
+                              (detect-hits 
+                               (ray/make-camera-ray 
+                                (/ nx w) (/ ny h)) 
+                               myhitlist 
+                               0.00001
+                               10000000))]
+        (recur (inc ns) new-col)))))
+
 (defn -gen-line 
-  [w h y]
+  [w h y bd]
   (loop [x 0
          coll '()]
     (if (= x w)
       (reverse coll)
       (do
-        (let [hit (detect-hits 
-                   (ray/make-camera-ray 
-                    (/ x w) (/ y h)) 
-                     myhitlist 
-                     0.00001
-                     10000000)
+        (let [hit (super-sample x y w h bd)
               new-coll (-coll-filter coll hit)]
           (recur (inc x) new-coll))))))
 
 (defn -gen-frame 
-  [w h]
+  [w h bd]
   (loop [y (dec h)
          coll '()]
     (if (= -1 y)
       coll
-      (let [new-coll (concat coll (-gen-line w h y))]
+      (let [new-coll (concat coll (-gen-line w h y bd))]
         (recur (dec y) new-coll)))))
 
 (defn get-ppm-header 
@@ -122,6 +158,7 @@
   (->> cols
 ;       -rgb-to-int ; TODO not needed yet
        vals
+       (map #(Math/sqrt %))
        (map map-to-255)
        (interpose " ")
        (apply str)))
@@ -131,10 +168,10 @@
   (map str (get-rgb cols)))
 
 (defn get-image 
-  [w h]
+  [w h bd]
   (str 
    (get-ppm-header w h) 
-   (clojure.string/join "\n" (map get-rgb (-gen-frame w h)))
+   (clojure.string/join "\n" (map get-rgb (-gen-frame w h bd)))
    "\n"))
 
 (defn write-image [file img]
@@ -144,4 +181,4 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (write-image "output.ppm" (get-image 800 400)))
+  (write-image "output.ppm" (get-image 200 100 100)))
