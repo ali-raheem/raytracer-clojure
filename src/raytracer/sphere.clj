@@ -2,22 +2,34 @@
   (:require [raytracer.vec3 :as vec3]
             [raytracer.ray :as ray]))
 
-(defn tmin-tmax [tmin tmax t]
+(defn sphere
+  [centre radius]
+  {:centre centre
+   :radius radius})
+
+(defn tmin-tmax
+  [tmin tmax t]
+  {:pre [(number? tmin), (number? tmax), (number? t)]}
   (and (> t tmin) (< t tmax)))
 
 (defn -hit-calc-roots
   [tmin tmax b d a]
-  (let [t  (/ (- (+ b (Math/sqrt d))) a)]
+  {:pre [(number? tmin)
+         (number? tmax)
+         (number? d)
+         (number? a)
+         (number? b)]}
+  (if-let [t  (/ (- (+ b (Math/sqrt d))) a)]
     (if (tmin-tmax tmin tmax t)
       t
-      (let [t  (/ (- (- b (Math/sqrt d))) a)]
+      (if-let [t  (/ (- (- b (Math/sqrt d))) a)]
         (if (tmin-tmax tmin tmax t)
           t
-          nil)
-))))
+          nil)))))
 
 (defn hit
   [centre radius ray tmin tmax]
+;  (println centre radius)
   (let [oc (vec3/sub (:origin ray) centre)
         a (vec3/dot (:direction ray) (:direction ray))
         b (vec3/dot oc (:direction ray)) 
@@ -27,6 +39,6 @@
       nil
       (if-let [t (-hit-calc-roots tmin tmax b discriminant a)]
         (let [p (ray/point-at-t ray t)
-              n (vec3/sub p (vec3/make-vec 0 0 -1))]
+              n (vec3/sub p centre)]
           {:t t :p p :n n})
         nil))))
